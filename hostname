@@ -1,0 +1,62 @@
+##########RHEL 9 & RHEL 10 — Hostname Configuration#############
+
+A hostname is the name assigned to a Linux system. 
+It is used to identify a server and can appear in the shell prompt, logs, monitoring systems, and network configuration.
+In RHEL 9 and RHEL 10, hostname management is primarily handled by systemd and the hostnamectl command.
+
+1. Introduction
+
+A hostname is the name assigned to a Linux system. It is used to identify a server 
+and can appear in the shell prompt, logs, monitoring systems, and network configuration.
+
+In RHEL 9 and RHEL 10, hostname management is primarily handled by systemd and the hostnamectl command.
+
+  
+2. Where is the hostname stored?
+  
+ The persistent static hostname is stored in:
+
+  /etc/hostname
+
+You can view it using: #cat /etc/hostname
+
+3. Check the Current Hostname Using hostname
+
+#hostname
+
+Example output: server01.example.com
+
+Using hostnamectl:
+
+#hostnamectl or #hostnamectl status
+-----------------------------------------------------------------
+Example:
+Static hostname: server01.example.com
+       Icon name: computer-vm
+         Chassis: vm
+      Machine ID: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+         Boot ID: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+  Virtualization: kvm
+Operating System: Red Hat Enterprise Linux 9
+     CPE OS Name: cpe:/o:redhat:enterprise_linux:9
+          Kernel: Linux 5.x.x
+    Architecture: x86-64
+-----------------------------------------------------------------
+
+
+Important:
+
+hostnamectl set-hostname updates the hostname for the currently running system 
+and also makes the configuration persistent. Therefore, normally a reboot is not required.
+
+  5. Manually Editing /etc/hostname
+
+  You can manually edit: #sudo vi /etc/hostname
+
+For example, change the contents to: server01.example.com
+
+Then check:  #cat /etc/hostname
+
+
+
+
