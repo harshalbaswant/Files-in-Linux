@@ -1,0 +1,396 @@
+=========================================================================
+Linux /etc/passwd File
+=========================================================================
+1. Introduction
+-------------------------------------------------------------------------
+The /etc/passwd file is an important system file in Linux. It contains basic
+information about local user accounts on the system.
+
+The file is located at:
+
+    /etc/passwd
+
+Each user account normally has one entry (one line) in this file. The fields
+are separated by a colon (:).
+
+Example:
+
+    root:x:0:0:root:/root:/bin/bash
+    harshal:x:1000:1000:Harshal:/home/harshal:/bin/bash
+
+
+2. Purpose of /etc/passwd
+-------------------------------------------------------------------------
+The /etc/passwd file provides information that Linux uses to identify users
+and their basic account settings.
+
+It can contain information such as:
+
+- Username
+- Password placeholder
+- User ID (UID)
+- Primary Group ID (GID)
+- User information/comment
+- Home directory
+- Login shell
+
+
+3. Structure of /etc/passwd
+-------------------------------------------------------------------------
+Each line contains seven fields:
+
+    username:password:UID:GID:GECOS:home_directory:login_shell
+
+Example:
+
+    harshal:x:1000:1000:Harshal:/home/harshal:/bin/bash
+
+
+4. Explanation of the Seven Fields
+-------------------------------------------------------------------------
+
+Field 1 - Username
+~~~~~~~~~~~~~~~~~~
+This is the name used to identify the user.
+
+Example:
+
+    harshal
+
+The username is normally used when logging in or when running commands
+against a specific user account.
+
+
+Field 2 - Password
+~~~~~~~~~~~~~~~~~~
+This field is normally represented by:
+
+    x
+
+On modern Linux systems, the actual password hash is generally stored in:
+
+    /etc/shadow
+
+The /etc/passwd file therefore normally does NOT contain the user's actual
+password.
+
+
+Field 3 - UID
+~~~~~~~~~~~~~
+UID means User ID.
+
+Linux uses the UID internally to identify a user.
+
+Example:
+
+    1000
+
+The root account normally has:
+
+    UID 0
+
+Regular user UIDs commonly start from 1000 on many Linux distributions,
+although the exact UID allocation can vary by distribution and configuration.
+
+
+Field 4 - GID
+~~~~~~~~~~~~~
+GID means Group ID.
+
+It identifies the user's primary group.
+
+Example:
+
+    1000
+
+You can use the id command to see the UID and group information for a user:
+
+    id harshal
+
+
+Field 5 - GECOS / User Information
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+This field contains descriptive information about the account.
+
+It may contain:
+
+- Full name
+- Office information
+- Contact information
+- Other account comments
+
+Example:
+
+    Harshal
+
+
+Field 6 - Home Directory
+~~~~~~~~~~~~~~~~~~~~~~~~
+This field specifies the user's home directory.
+
+Example:
+
+    /home/harshal
+
+For the root user, the home directory is normally:
+
+    /root
+
+The home directory is the location where the user's personal files and
+configuration files are normally stored.
+
+
+Field 7 - Login Shell
+~~~~~~~~~~~~~~~~~~~~~
+This field specifies the shell that is started when the user logs in.
+
+Example:
+
+    /bin/bash
+
+Other possible shells include:
+
+    /bin/sh
+    /bin/zsh
+    /sbin/nologin
+
+A system account may use /sbin/nologin when interactive login is not
+intended.
+
+
+5. Example Entry
+-------------------------------------------------------------------------
+Consider this entry:
+
+    harshal:x:1000:1000:Harshal:/home/harshal:/bin/bash
+
+It can be interpreted as:
+
+    Username       = harshal
+    Password field = x
+    UID            = 1000
+    GID            = 1000
+    GECOS          = Harshal
+    Home directory = /home/harshal
+    Login shell    = /bin/bash
+
+
+6. View the /etc/passwd File
+-------------------------------------------------------------------------
+To display the file:
+
+    cat /etc/passwd
+
+For easier viewing:
+
+    less /etc/passwd
+
+To display the first few entries:
+
+    head /etc/passwd
+
+To display the last few entries:
+
+    tail /etc/passwd
+
+
+7. Find a Specific User
+-------------------------------------------------------------------------
+You can use grep to search for a username.
+
+Example:
+
+    grep '^harshal:' /etc/passwd
+
+Using ^ and : helps match the username field instead of accidentally
+matching the username somewhere else in a line.
+
+
+8. Check a User's Account Information
+-------------------------------------------------------------------------
+The id command is useful for checking the account's UID and groups:
+
+    id harshal
+
+You can also use:
+
+    getent passwd harshal
+
+The getent command is particularly useful because it can retrieve account
+information through the system's configured name-service mechanisms, not
+only from the local /etc/passwd file.
+
+
+9. Check File Permissions
+-------------------------------------------------------------------------
+Check the permissions with:
+
+    ls -l /etc/passwd
+
+A common result is similar to:
+
+    -rw-r--r--. 1 root root ... /etc/passwd
+
+This means the file is readable by users, while modification is normally
+restricted to root.
+
+Check additional file information with:
+
+    stat /etc/passwd
+
+
+10. Do Not Manually Edit /etc/passwd
+-------------------------------------------------------------------------
+Although /etc/passwd is a text file, manually editing it is not recommended.
+
+Use standard Linux account-management commands instead.
+
+Create a user:
+
+    useradd username
+
+Set or change a password:
+
+    passwd username
+
+Modify a user:
+
+    usermod [options] username
+
+Delete a user:
+
+    userdel username
+
+These commands help maintain the account database correctly.
+
+
+11. /etc/passwd vs /etc/shadow
+-------------------------------------------------------------------------
+
+/etc/passwd
+- Contains basic user account information.
+- Usually readable by normal users.
+- Contains the password placeholder, commonly x.
+- Stores UID, GID, home directory, and login shell.
+
+ /etc/shadow
+- Stores password hashes and password-aging information.
+- Access is restricted because it contains sensitive authentication data.
+- Normally readable only by root or appropriately privileged processes.
+
+
+12. Useful Commands
+-------------------------------------------------------------------------
+
+Display all users:
+
+    cat /etc/passwd
+
+Find a user:
+
+    grep '^username:' /etc/passwd
+
+Check UID and groups:
+
+    id username
+
+Query the account database:
+
+    getent passwd username
+
+Check file permissions:
+
+    ls -l /etc/passwd
+
+Check file metadata:
+
+    stat /etc/passwd
+
+
+13. Read /etc/passwd Using a Shell Script
+-------------------------------------------------------------------------
+Because the fields are separated by colons, a Bash script can use ':' as
+the field separator.
+
+Example:
+
+    while IFS=: read -r username password uid gid gecos home shell
+    do
+        echo "User: $username"
+        echo "UID: $uid"
+        echo "Home: $home"
+        echo "Shell: $shell"
+        echo "--------------------"
+    done < /etc/passwd
+
+This reads each line and places the seven fields into separate variables.
+
+
+14. Important Administrative Notes
+-------------------------------------------------------------------------
+- /etc/passwd is a critical system file.
+- Do not delete or modify entries manually unless you fully understand the
+  consequences.
+- Use useradd, usermod, userdel, passwd, and related administrative commands.
+- The password hash should normally be stored in /etc/shadow rather than
+  /etc/passwd.
+- Be careful when changing UIDs or GIDs because existing files may still be
+  owned by the old numeric IDs.
+- System and service accounts may also appear in /etc/passwd.
+
+
+15. Quick Reference
+-------------------------------------------------------------------------
+
+File:
+    /etc/passwd
+
+Number of fields:
+    7
+
+Separator:
+    :
+
+General format:
+    username:password:UID:GID:GECOS:home_directory:login_shell
+
+Root:
+    UID = 0
+    Home = /root
+    Typical shell = /bin/bash
+
+Common commands:
+    cat /etc/passwd
+    grep '^username:' /etc/passwd
+    getent passwd username
+    id username
+    ls -l /etc/passwd
+    stat /etc/passwd
+
+
+16. Summary
+-------------------------------------------------------------------------
+The /etc/passwd file is a central Linux account-information file. Each line
+represents a user account and contains seven colon-separated fields.
+
+The most important fields for a system administrator are:
+
+    Username
+    UID
+    GID
+    Home directory
+    Login shell
+
+For password information, modern Linux systems normally use /etc/shadow.
+
+For administration, use standard commands such as useradd, usermod,
+userdel, and passwd rather than manually editing /etc/passwd.
+
+
+Reference
+-------------------------------------------------------------------------
+GeeksforGeeks, "Understanding the /etc/passwd File"
+https://www.geeksforgeeks.org/linux-unix/understanding-the-etc-passwd-file/
+
+The document above is written as an original system-administration guide,
+using the referenced article as background material.
