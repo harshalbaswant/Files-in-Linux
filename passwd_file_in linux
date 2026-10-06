@@ -108,7 +108,7 @@ You can use the id command to see the UID and group information for a user:
     id harshal
 
 
-Field 5 - GECOS / User Information
+Field 5 - GECOS / User Information  [General Electric Comprehensive Operating System]
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 This field contains descriptive information about the account.
 
