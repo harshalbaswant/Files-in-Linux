@@ -1,0 +1,127 @@
+===============================================================================
+LINUX /etc/shadow FILE
+===============================================================================
+1. OVERVIEW & PURPOSE
+-------------------------------------------------------------------------------
+In early Unix/Linux implementations, user account attributes and encrypted 
+password hashes were stored together in /etc/passwd. Because /etc/passwd 
+requires world-read permissions (0644) so processes can map User IDs (UIDs) 
+to usernames, any user could extract password hashes and execute offline 
+dictionary or brute-force attacks (e.g., using John the Ripper or Hashcat).
+
+To eliminate this vulnerability, modern Linux systems isolate authentication 
+hashes and password aging policies into the /etc/shadow file.
+
+* File Ownership:   root:shadow (or root:root depending on distribution)
+* Permissions:      0600 (-rw-------) or 0640 (-rw-r-----)
+* Access Scope:     Strictly restricted to root or processes operating with 
+                    the CAP_DAC_OVERRIDE capability (e.g., PAM modules).
+
+-------------------------------------------------------------------------------
+2. FILE SYNTAX & FIELD BREAKDOWN
+-------------------------------------------------------------------------------
+Each line in /etc/shadow represents a single user account and contains 
+9 colon-separated (:) fields:
+
+username:encrypted_password:last_change:min_age:max_age:warning:inactivity:expiration:reserved
+
+Sample Record:
+sysadmin:$6$qZ7yX2aP$k9/3.9wXb...:19800:0:90:7:14:19999:
+
+Field Descriptions:
+1. Username:
+   Matching account login name in /etc/passwd.
+   Example: sysadmin
+
+2. Encrypted Password:
+   Hashed password string (Prefix + Salt + Hash) or account status flag.
+   Example: $6$qZ7yX2aP$k9/3.9wXb...
+
+3. Last Password Change:
+   Days elapsed between Jan 1, 1970 (Unix Epoch) and last modification.
+   Example: 19800
+
+4. Minimum Password Age:
+   Minimum days required before user is allowed to change their password.
+   Example: 0 (Can change immediately)
+
+5. Maximum Password Age:
+   Maximum days password remains valid before mandatory password reset.
+   Example: 90 (Expires in 90 days)
+
+6. Warning Period:
+   Number of days warning issued to the user prior to password expiration.
+   Example: 7 (Warn 7 days before)
+
+7. Inactivity Period:
+   Days after expiration before account is permanently locked/disabled.
+   Example: 14 (Disable 14 days post-expiration)
+
+8. Expiration Date:
+   Absolute date (in epoch days) when the entire account expires.
+   Example: 19999
+
+9. Reserved:
+   Reserved field for future features (currently unused/blank).
+
+-------------------------------------------------------------------------------
+3. CRYPTOGRAPHIC HASH FORMATS
+-------------------------------------------------------------------------------
+Field 2 uses Pluggable Authentication Modules (PAM) crypt-compatible 
+hashing algorithms identified by a $id$ prefix:
+
+Identifier  | Algorithm        | Status / Recommendation
+------------+------------------+-----------------------------------------------
+$1$         | MD5              | Obsolete / Insecure
+$2a$ / $2y$ | Blowfish (bcrypt)| Secure (BSD/Debian variant default)
+$5$         | SHA-256          | Secure
+$6$         | SHA-512          | Current Standard
+$y$         | yescrypt         | Modern Enterprise Standard (Fedora, RHEL, etc)
+
+Special Characters in Field 2:
+* "!" or "*": Account locked/disabled for password login (e.g., system daemons).
+* "!" prefix: Account locked via `usermod -L` or `passwd -l`.
+* Empty (""): No password set (High security risk).
+
+-------------------------------------------------------------------------------
+4. ADMINISTRATIVE COMMANDS & MANAGEMENT
+-------------------------------------------------------------------------------
+To edit the file safely with write locks:
+  $ sudo vipw -s
+
+Password Aging Management (chage):
+  # View account aging details
+  $ sudo chage -l sysadmin
+
+  # Set max age 90 days, warn 14 days prior, inactivity 7 days
+  $ sudo chage -M 90 -W 14 -I 7 sysadmin
+
+  # Set absolute account expiration date (YYYY-MM-DD)
+  $ sudo chage -E 2026-12-31 sysadmin
+
+Locking and Unlocking Accounts:
+  # Lock account
+  $ sudo usermod -L sysadmin
+
+  # Unlock account
+  $ sudo usermod -U sysadmin
+
+Integrity Audit:
+  # Verify formatting and cross-reference with /etc/passwd
+  $ sudo pwck -r
+
+-------------------------------------------------------------------------------
+5. SECURITY & HARDENING RECOMMENDATIONS
+-------------------------------------------------------------------------------
+1. Enforce strict permissions:
+   $ sudo chmod 600 /etc/shadow
+   $ sudo chown root:root /etc/shadow
+
+2. Audit for accounts without passwords:
+   $ sudo awk -F: '($2 == "") { print $1 }' /etc/shadow
+
+3. Set system default aging rules in /etc/login.defs:
+   PASS_MAX_DAYS   90
+   PASS_MIN_DAYS   10
+   PASS_WARN_AGE   7
+===============================================================================
