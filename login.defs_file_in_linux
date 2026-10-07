@@ -1,0 +1,142 @@
+===============================================================================
+ LINUX /etc/login.defs CONFIGURATION FILE
+===============================================================================
+1. OVERVIEW & PURPOSE
+
+The /etc/login.defs file serves as the site-specific configuration file for 
+the shadow password suite (util-linux / shadow tools). It defines system-wide 
+defaults and security parameters used when creating, modifying, or deleting 
+user accounts and groups via utilities such as useradd, usermod, userdel, 
+groupadd, and chage.
+
+Key Characteristics:
+* File Ownership:   root:root
+* Default Perms:    0644 (-rw-r--r--)
+* Administrative Scope: Establishes global baseline settings for account creation,
+  UID/GID range allocations, default password aging, and shell behavior.
+
+Note: Parameters set in /etc/login.defs apply primarily at the time of account 
+creation. Existing accounts are not automatically updated retroactively when this 
+file is modified.
+
+
+2. KEY CONFIGURATION PARAMETERS & STRUCTURE
+
+The file is organized as a plain text key-value pair format:
+
+PARAM_NAME    VALUE
+
+--- A. Password Aging Defaults (Applied during useradd) ---
+
+PASS_MAX_DAYS    90
+Maximum number of days a password may be used before required reset.
+
+PASS_MIN_DAYS    7
+Minimum number of days required between password changes.
+
+PASS_WARN_AGE    14
+Number of days warning given to user prior to password expiration.
+
+
+--- B. User ID (UID) and Group ID (GID) Allocation Ranges ---
+
+UID_MIN          1000
+UID_MAX          60000
+Defines the range of User IDs available for assignment to regular users.
+
+GID_MIN          1000
+GID_MAX          60000
+Defines the range of Group IDs available for assignment to regular groups.
+
+SYS_UID_MIN      100
+SYS_UID_MAX      999
+Defines the reserved UID range for system accounts (e.g., daemons/services).
+
+SYS_GID_MIN      100
+SYS_GID_MAX      999
+Defines the reserved GID range for system groups.
+
+
+--- C. Environment & Login Shell Control ---
+
+ENV_PATH         PATH=/usr/local/bin:/usr/bin:/bin
+Sets the standard PATH environment variable for regular users upon login.
+
+ENV_SUPATH       PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+Sets the elevated PATH environment variable for superuser (root) sessions.
+
+UMASK            022
+Defines default file creation permission mask for newly created users. 
+(022 results in standard 755 directory / 644 file permissions).
+
+TTYGROUP         tty
+TTYPERM          0600
+Defines ownership and permissions for terminal devices upon user login.
+
+
+--- D. Account Management & Cleanup Directives ---
+
+CREATE_HOME      yes
+Specifies whether useradd should create a home directory by default.
+
+USERDEL_CMD      /usr/sbin/userdel-custom-script
+Optional external script executed when removing a user with userdel.
+
+DEFAULT_HOME     yes
+Determines if user can log in if chdir to home directory fails.
+
+
+--- E. Cryptographic Hashing Algorithms ---
+
+ENCRYPT_METHOD   SHA512
+Defines default hashing algorithm for user passwords (e.g., SHA512, YESCRYPT).
+
+SHA_CRYPT_MIN_ROUNDS  5000
+SHA_CRYPT_MAX_ROUNDS  10000
+Defines minimum and maximum hashing round thresholds for SHA-256 / SHA-512.
+
+
+3. OVERRIDING /etc/login.defs AT RUNTIME
+
+Administrators can override parameters defined in /etc/login.defs dynamically 
+during user or group creation using command-line switches.
+
+Examples:
+
+1. Temporary Override via `-K` Key-Value Flag (groupadd / useradd):
+   $ sudo groupadd -K GID_MIN=5000 -K GID_MAX=6000 devteam
+   $ sudo useradd -K PASS_MAX_DAYS=45 -m jdoe
+
+2. Overriding via `/etc/default/useradd`:
+   Specific user creation defaults (e.g., SHELL, HOME, SKEL) can be customized 
+   separately in /etc/default/useradd using:
+   $ sudo useradd -D -s /bin/bash
+
+
+4. AUDITING & VERIFICATION COMMANDS
+
+To inspect current system account settings derived from /etc/login.defs:
+
+1. Check active user password aging attributes:
+   $ sudo chage -l <username>
+
+2. Audit next available UID/GID allocations:
+   $ getent passwd | awk -F: '$3 >= 1000 {print $1, $3}' | sort -n -k2
+
+3. Test configuration file syntax integrity:
+   $ sudo pwck -r
+
+
+5. SECURITY HARDENING RECOMMENDATIONS
+
+1. Enforce Strict Password Rotation:
+   Ensure PASS_MAX_DAYS does not exceed 90 days for standard enterprise compliance.
+
+2. Restrict System File Permissions (UMASK):
+   Set `UMASK 027` or `UMASK 077` in multi-tenant environments to restrict 
+   unauthorized cross-user directory access.
+
+3. Restrict Root Shell PATH:
+   Verify ENV_SUPATH does not contain current directory pointers (`.`) to prevent 
+   path-precedence binary execution attacks.
+===============================================================================
