@@ -1,0 +1,165 @@
+================================================================================
+ /etc/sudoers & PRIVILEGE MANAGEMENT GUIDE
+================================================================================
+
+1. OVERVIEW & PURPOSE
+--------------------------------------------------------------------------------
+The /etc/sudoers file is a critical security configuration file in Linux. It
+controls privilege escalation by defining which users and groups are allowed to
+execute commands with elevated (root) privileges.
+
+Primary Locations:
+  - Main configuration file:          /etc/sudoers
+  - Drop-in configuration directory:  /etc/sudoers.d/
+
+Key Capabilities Controlled by sudoers:
+  - Permitted users and groups
+  - Target executable commands (must use full binary paths)
+  - Target execution contexts (RunAs user and RunAs group)
+  - Applicable host systems
+  - Password authentication requirements and session timeouts
+  - Audit logging behavior
+--------------------------------------------------------------------------------
+2. SAFE EDITING AND VALIDATION PROCEDURES
+--------------------------------------------------------------------------------
+WARNING: NEVER edit /etc/sudoers using standard text editors (vi, vim, nano).
+Unvalidated edits can corrupt syntax and completely lock administrative access.
+
+Recommended Tool: visudo
+The visudo utility locks the configuration file during editing and validates
+syntax prior to applying changes.
+
+Common Commands:
+  # visudo                           Edit the primary /etc/sudoers file
+  # visudo -f /etc/sudoers.d/<file>  Create/edit a drop-in configuration file
+  # visudo -c                        Validate syntax without opening editor
+
+--------------------------------------------------------------------------------
+3. SUDOERS SYNTAX AND ALIAS STRUCTURE
+--------------------------------------------------------------------------------
+Standard Rule Format:
+  user_or_group   host=(run_as_user:run_as_group)   [options:] command
+
+Example Rule:
+  harshal ALL=(ALL) ALL
+
+Syntax Breakdown:
+  - harshal : User account to which the rule applies.
+  -  ALL     : Rule is valid on all host systems.
+  -  (ALL)   : Permits command execution as any user/group context.
+  -  ALL     : Grants access to execute all commands.
+
+Aliases:
+  Aliases simplify management across large environments by grouping entities:
+
+  User_Alias  LINUXADMINS = harshal, admin1, admin2
+  Host_Alias  WEBSERVERS  = web01, web02, web03
+  Cmnd_Alias  WEB_CMDS    = /usr/bin/systemctl restart httpd, \
+                            /usr/bin/systemctl status httpd
+
+  # Applied Directive:
+  LINUXADMINS WEBSERVERS = (root) WEB_CMDS
+
+--------------------------------------------------------------------------------
+4. GROUP DELEGATION & WHEEL GROUP ACCESS
+--------------------------------------------------------------------------------
+On RHEL and AlmaLinux systems, administrative sudo access is typically delegated
+to members of the "wheel" group.
+
+Group Syntax:
+  The '%' character indicates a group name.
+  %wheel ALL=(ALL) ALL
+
+Adding Users to the Wheel Group:
+  1. Assign user to group:
+     # usermod -aG wheel harshal
+
+  2. Verify membership:
+     # id harshal
+     Output: uid=1001(harshal) gid=1001(harshal) groups=1001(harshal),10(wheel)
+
+  3. Verification:
+     The target user must start a new login session for group changes to apply.
+
+--------------------------------------------------------------------------------
+5. SECURITY PRINCIPLE: LEAST PRIVILEGE
+--------------------------------------------------------------------------------
+Avoid assigning unrestricted access (ALL=(ALL) ALL) to regular operational
+users. Instead, grant explicit binary paths.
+
+Examples:
+  1. Single Command Access:
+     harshal ALL=(root) /usr/bin/systemctl restart httpd
+
+  2. Multiple Explicit Commands:
+     harshal ALL=(root) /usr/bin/systemctl restart httpd, \
+                        /usr/bin/systemctl status httpd
+
+  3. Unattended / Scripted Execution (NOPASSWD):
+     harshal ALL=(root) NOPASSWD: /usr/bin/systemctl restart httpd
+
+Security Note on Exclusions (!):
+  Do NOT grant ALL commands and attempt to deny specific ones using '!'
+  (e.g., ALL, !/bin/bash). Users can easily bypass negative rules via shell
+  escapes, text editors, or subshells. Always explicitly ALLOW required binaries.
+
+--------------------------------------------------------------------------------
+6. MODULAR CONFIGURATION VIA /etc/sudoers.d/
+--------------------------------------------------------------------------------
+Red Hat recommends using the /etc/sudoers.d/ directory for custom rules
+rather than modifying /etc/sudoers directly.
+
+Advantages:
+  - Prevents accidental corruption of the main configuration file.
+  - Simplifies configuration management and automation (Ansible, Puppet).
+  - Enables modular granting and revocation of permissions per application/role.
+
+Standard Workflow:
+  1. Create file via visudo:
+     # visudo -f /etc/sudoers.d/webadmin
+
+  2. Add directive:
+     harshal ALL=(root) /usr/bin/systemctl restart httpd
+
+  3. Validate configuration:
+     # visudo -c
+
+--------------------------------------------------------------------------------
+7. COMMAND CHEAT SHEET
+--------------------------------------------------------------------------------
+
+  Action                         Command
+==============================   ===============================================
+  Edit main sudoers              visudo
+  Edit drop-in file              visudo -f /etc/sudoers.d/<filename>
+  Validate syntax                visudo -c
+  List current privileges        sudo -l
+  Find executable path           which <command>  OR  command -v <command>
+  Switch to root shell           sudo -i
+  Inspect authentication logs    grep sudo /var/log/secure
+  Query systemd journal          journalctl _COMM=sudo
+
+--------------------------------------------------------------------------------
+8. AUDITING & LOGGING
+--------------------------------------------------------------------------------
+Sudo logs all execution attempts and privilege escalations.
+
+Log Locations on AlmaLinux / RHEL:
+  - Security Log:      /var/log/secure
+  - Systemd Journal:   journalctl _COMM=sudo
+
+Example Query:
+  # grep sudo /var/log/secure
+
+--------------------------------------------------------------------------------
+9. SUMMARY OF BEST PRACTICES
+--------------------------------------------------------------------------------
+1. ALWAYS edit with visudo and validate with 'visudo -c'.
+2. Enforce LEAST PRIVILEGE: grant specific commands, not full root access.
+3. Use FULL PATHS for all executables (e.g., /usr/bin/systemctl).
+4. Utilize /etc/sudoers.d/ drop-in files for custom rules.
+5. Prefer GROUP-BASED administration for enterprise scalability.
+6. Restrict NOPASSWD to automated non-interactive tasks.
+7. Regularly audit user access with 'sudo -l' and monitor security log files.
+
+================================================================================
