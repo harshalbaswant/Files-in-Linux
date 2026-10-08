@@ -1,0 +1,147 @@
+===================================================================================
+/etc/os-release AND /usr/lib/os-release
+===================================================================================
+
+1. OVERVIEW
+-------------------------------------------------------------------------------
+The `os-release` file is a standard, plain-text configuration file used by modern
+Linux operating systems operating under systemd or compliant init systems. It
+provides operating system identification data in a simple, shell-compatible
+key-value format without executing shell scripts.
+
+
+2. FILE LOCATIONS AND PRECEDENCE
+-------------------------------------------------------------------------------
+The system inspects two locations to retrieve OS identification metadata:
+
+    1. /etc/os-release  : Primary configuration path. Used for local overrides or
+                      vendor-configured runtime settings.
+
+    2. /usr/lib/os-release : Fallback configuration path. Vendor-supplied read-only
+                         default shipped with the OS image/package.
+
+Lookup Hierarchy:
++-------------------------------------------------------------+
+| Check /etc/os-release                                       |
+|   |--> File exists? -------> [ READ /etc/os-release ]       |
+|   `--> File missing?                                        |
+|         `--> Fallback ------> [ READ /usr/lib/os-release ]  |
++-------------------------------------------------------------+
+
+* Sysadmin Note: /etc/os-release is often a symlink pointing to 
+  /usr/lib/os-release or a distribution-specific file (such as /etc/redhat-release
+  or /etc/lsb-release on legacy systems).
+
+3. FORMAT GUIDELINES
+-------------------------------------------------------------------------------
+- Key-Value Structure : Enforced as KEY=VALUE on separate lines.
+
+- Shell Compatibility : Syntax matches standard bash variable assignments, 
+                        allowing safe sourcing in scripts (`source /etc/os-release`).
+
+- Quoting Rules       : Values containing spaces, quotes, or special characters 
+                        must be enclosed in double (") or single (') quotes. 
+                        Standard backslash escape rules apply (\", \\, \$).
+
+- Comments            : Lines starting with # are treated as comments and ignored.
+
+
+4. STANDARD VARIABLE DEFINITIONS
+-------------------------------------------------------------------------------
+Variable Name   Req/Opt   Description & Example Value
+-------------   -------   -----------------------------------------------------
+NAME            Required  User-friendly string identifying the OS.
+                          Example: "Ubuntu" / "RHEL"
+
+VERSION         Optional  Full version string including release name/patch.
+                          Example: "24.04 LTS (Noble Numbat)"
+
+ID              Required  Lowercase, lower-ascii string identifying the OS (no spaces).
+                          Example: ubuntu / rhel / debian
+
+ID_LIKE         Optional  Space-separated list of parent/derivative distributions.
+                          Example: "rhel fedora" / "debian"
+
+VERSION_ID      Optional  Lowercase, lower-ascii version identifier without spaces.
+                          Example: "24.04" / "9.4"
+
+PRETTY_NAME     Required  Full descriptive OS name intended for display/logs.
+                          Example: "Ubuntu 24.04 LTS"
+
+ANSI_COLOR      Optional  ANSI color sequence for console output formatting.
+                          Example: "0;31" / "1;34"
+
+CPE_NAME        Optional  Common Platform Enumeration (CPE) string (NIST standard).
+                          Example: "cpe:/o:canonical:ubuntu_linux:24.04"
+
+HOME_URL        Optional  Official home page URL of the operating system.
+                          Example: "https://www.ubuntu.com/"
+
+BUG_REPORT_URL  Optional  Issue tracker or support portal URL.
+                          Example: "https://bugs.launchpad.net/ubuntu/"
+
+
+5. PRODUCTION FILE EXAMPLES
+-------------------------------------------------------------------------------
+
+--- Example A: Ubuntu 24.04 LTS ---
+NAME="Ubuntu"
+VERSION="24.04 LTS (Noble Numbat)"
+ID=ubuntu
+ID_LIKE=debian
+PRETTY_NAME="Ubuntu 24.04 LTS"
+VERSION_ID="24.04"
+HOME_URL="https://www.ubuntu.com/"
+SUPPORT_URL="https://help.ubuntu.com/"
+BUG_REPORT_URL="https://bugs.launchpad.net/ubuntu/"
+PRIVACY_POLICY_URL="https://www.ubuntu.com/legal/terms-and-policies/privacy-policy"
+UBUNTU_CODENAME=noble
+
+--- Example B: Red Hat Enterprise Linux 9 ---
+NAME="Red Hat Enterprise Linux"
+VERSION="9.4 (Plow)"
+ID="rhel"
+ID_LIKE="fedora"
+VERSION_ID="9.4"
+PLATFORM_ID="platform:el9"
+PRETTY_NAME="Red Hat Enterprise Linux 9.4 (Plow)"
+ANSI_COLOR="0;32"
+CPE_NAME="cpe:/o:redhat:enterprise_linux:9::baseos"
+HOME_URL="https://www.redhat.com/"
+BUG_REPORT_URL="https://bugzilla.redhat.com/"
+
+
+6. SCRIPTING AND USAGE
+-------------------------------------------------------------------------------
+
+Bash Sourcing Example:
+
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    if [[ -f /etc/os-release ]]; then
+        source /etc/os-release
+    elif [[ -f /usr/lib/os-release ]]; then
+        source /usr/lib/os-release
+    else
+        echo "ERROR: Unable to locate os-release file." >&2
+        exit 1
+    fi
+
+    echo "Detected OS: ${PRETTY_NAME}"
+    echo "Base ID:     ${ID}"
+
+    case "${ID}" in
+        ubuntu|debian)
+            echo "Running Debian/Ubuntu package routine..."
+            ;;
+        rhel|centos|rocky|almalinux)
+            echo "Running RHEL-family package routine..."
+            ;;
+        *)
+            echo "Unsupported distribution family."
+            exit 1
+            ;;
+    esac
+
+===============================================================================
