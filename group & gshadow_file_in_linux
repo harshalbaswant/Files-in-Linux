@@ -1,0 +1,138 @@
+===============================================================================
+ /etc/group AND /etc/gshadow FILES
+===============================================================================
+Document ID:     SYS-DOC-GRP-001
+Classification:  Internal Technical Reference
+Scope:           Linux Group Administration & Privilege Management
+
+1. OVERVIEW & PURPOSE
+
+Group management in Linux allows administrators to organize multiple users into
+logical administrative units for access control (DAC - Discretionary Access Control).
+Permissions assigned to a group are automatically inherited by all its members.
+
+To separate public group definitions from sensitive group passwords and administrator
+lists, modern Linux systems split group metadata across two distinct files:
+
+  	1. /etc/group
+  		* World-readable reference file mapping Group Names to Group IDs (GIDs) and secondary/supplementary members.
+   		* Permissions: 0644 (-rw-r--r--) | Ownership: root:root
+
+  	2. /etc/gshadow
+   		* Secure, restricted shadow file storing encrypted group passwords and designated group administrators.
+  		* Permissions: 0640 (-rw-r-----) or 0600 (-rw-------) | Ownership: root:shadow / root:root
+
+2. FILE SYNTAX & FIELD BREAKDOWN
+
+-------------------------------------------------------------------------------
+A. STRUCTURE OF /etc/group
+-------------------------------------------------------------------------------
+Each line in /etc/group represents a single group and contains 4 colon-separated fields:
+
+group_name:password:GID:user_list
+
+Sample Record:
+sysadmins:x:1005:alice,bob,charlie
+
+Field Descriptions:
+
+	  1. Group Name:
+  	 Unique string identifying the group (e.g., sysadmins, docker, sudo).
+
+  	2. Group Password Flag:
+   	Usually set to 'x', indicating that the actual hashed group password is
+   	stored in /etc/gshadow. If left empty, no group password is configured.
+
+  	3. Group ID (GID):
+	   Unique numerical identifier for the group:
+	   * 0        : Superuser group (root)
+	   * 1–999    : System groups (reserved for services and system daemons)
+  	   * 1000+    : Standard user groups
+
+	  4. User List:
+ 	  Comma-separated list of secondary/supplementary users assigned to this group.
+ 	  Note: Primary group members (where this GID is their main group in /etc/passwd)
+	  are omitted here by default.
+
+-------------------------------------------------------------------------------
+B. STRUCTURE OF /etc/gshadow
+-------------------------------------------------------------------------------
+Each line in /etc/gshadow mirrors an entry in /etc/group and contains 4 colon-separated fields:
+
+group_name:encrypted_password:group_administrators:group_members
+
+Sample Record:
+sysadmins:$6$a7X9p...:alice:bob,charlie
+
+Field Descriptions:
+
+	  1. Group Name:
+	     Matches the corresponding group entry in /etc/group.
+
+	  2. Encrypted Password:
+   	  Hashed password for the group (used with the `newgrp` command).
+  	   * '!' or '*': Group has no password; users cannot switch into it without
+  	   being explicit members.
+  	   * Empty (""): No password required (unsecured access if allowed).
+
+	  3. Group Administrators:
+   	    Comma-separated list of users who can administer the group (e.g., add or remove
+  	    members and set passwords via the `gpasswd` command) without requiring root privileges.
+
+  	4. Group Members:
+   	    Comma-separated list of secondary members belonging to the group (mirrors /etc/group).
+
+3. ADMINISTRATIVE COMMANDS & MANAGEMENT
+
+Direct editing of these files should be avoided in favor of dedicated utility commands.
+
+	1. Group Management Utilities:
+
+	   # Create a new group
+	   $ sudo groupadd -g 2000 devteam
+
+	   # Modify group name or GID
+	   $ sudo groupmod -n developers devteam
+	
+	   # Delete a group
+	   $ sudo groupdel developers
+
+	2. Managing Members & Group Admins (`gpasswd`):
+
+ 	  # Add a secondary user to a group
+	   $ sudo gpasswd -a alice sysadmins
+
+	   # Remove a user from a group
+ 	    $ sudo gpasswd -d bob sysadmins
+	
+	   # Assign group administrators (allows alice to manage group members)
+	    $ sudo gpasswd -A alice sysadmins
+
+  	 # Set a group password (allows non-members to temporarily switch groups)
+	    $ sudo gpasswd sysadmins
+
+	3. Switching Group Contexts (`newgrp`):
+
+	   # Temporarily switch primary group session context
+	    $ newgrp sysadmins
+
+	4. Integrity Auditing:
+
+	   # Check /etc/group and /etc/gshadow for syntax errors and consistency
+	    $ sudo grpck -r
+
+4. SECURITY & HARDENING BEST PRACTICES
+	
+	1. Strict File Permission Enforcement:
+	   Ensure /etc/gshadow remains unreadable to non-privileged users:
+	    $ sudo chmod 640 /etc/gshadow
+	    $ sudo chown root:shadow /etc/gshadow
+
+	2. Limit Group Passwords:
+	   Avoid setting explicit group passwords unless strictly necessary. Rely on
+	   explicit user membership and sudo rules instead of shared group passwords.
+
+	3. Regular Consistency Checks:
+	   Periodically run `grpck` to ensure there are no orphaned group entries or
+	   mismatched IDs between /etc/group and /etc/gshadow.
+===============================================================================
