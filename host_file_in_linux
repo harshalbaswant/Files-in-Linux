@@ -1,0 +1,111 @@
+======================================================================
+/etc/hosts FILE
+----------------------------------------------------------------------
+1. OVERVIEW
+======================================================================
+The /etc/hosts file is an operating system file that maps hostnames 
+to IP addresses locally. It acts as a static lookup table that 
+supplements or overrides external Name Service Switch (NSS) and Domain 
+Name System (DNS) queries.
+
+======================================================================
+2. SYNTAX STRUCTURE
+======================================================================
+Entries are parsed sequentially using the following layout:
+
+<IP_Address>    <Canonical_Hostname>    [Aliases...]
+
+* <IP_Address>: IPv4 or IPv6 address.
+* <Canonical_Hostname>: Primary Fully Qualified Domain Name (FQDN).
+* [Aliases...]: Optional secondary short names separated by spaces or tabs.
+* Comments: Any text following a '#' character is treated as a comment.
+
+======================================================================
+3. STANDARD TEMPLATES BY OPERATING SYSTEM
+======================================================================
+
+--- Linux / Unix / macOS (/etc/hosts) ---
+# Localhost loopback addresses
+127.0.0.1       localhost
+::1             localhost ip6-localhost ip6-loopback
+
+# Local machine hostname mapping
+127.0.1.1       workstation.internal.local workstation
+
+--- Windows (C:\Windows\System32\drivers\etc\hosts) ---
+# Localhost resolution handled within DNS itself.
+127.0.0.1       localhost
+::1             localhost
+
+======================================================================
+4. PRACTICAL ADMINISTRATION SCENARIOS
+======================================================================
+
+A. Environment Overrides
+------------------------
+Direct traffic to a local development or staging web server without 
+modifying public DNS records:
+
+192.168.1.50    staging.example.com
+127.0.0.1       dev.internal.local
+
+B. Internal Infrastructure Mapping
+----------------------------------
+Assign readable aliases to internal cluster nodes, databases, or 
+management interfaces:
+
+10.0.0.10       db-primary.internal   db1
+10.0.0.11       db-replica.internal   db2
+10.0.0.254      router.internal       gateway
+
+C. Null-Routing / Blocking Unwanted Hosts
+-----------------------------------------
+Block telemetry or malicious domains locally by routing them to a 
+non-routable address (0.0.0.0 is preferred over 127.0.0.1 to avoid 
+local port listener conflicts):
+
+0.0.0.0         telemetry.vendor.com
+0.0.0.0         adserver.malicious-domain.net
+
+======================================================================
+5. OPERATIONAL & MANAGEMENT COMMANDS
+======================================================================
+
+File Permissions & Ownership:
+-----------------------------
+Ensure the file is protected against unauthorized modifications.
+
+Linux / Unix:
+  sudo chown root:root /etc/hosts
+  sudo chmod 644 /etc/hosts
+
+Flushing DNS Cache:
+-------------------
+After making changes, flush the local DNS resolver cache to enforce 
+an immediate update.
+
+* Linux (systemd-resolved):
+  sudo resolvectl flush-caches
+
+* macOS:
+  sudo dscacheutil -flushcache; sudo killall -HUP mDNSResponder
+
+* Windows (PowerShell / CMD):
+  ipconfig /flushdns
+
+Order of Resolution (/etc/nsswitch.conf):
+----------------------------------------
+Verify local host precedence over external DNS in Linux:
+
+hosts:          files dns
+
+======================================================================
+6. SECURITY BEST PRACTICES
+======================================================================
+1. Permissions: Restrict write privileges strictly to administrative 
+   users (root / Administrator).
+2. Monitoring: Monitor /etc/hosts for unauthorized alterations, as 
+   malicious actors frequently hijack domain resolution to redirect 
+   critical traffic.
+3. Scope: Remember that modifications to /etc/hosts only affect the 
+   host machine on which the file resides.
