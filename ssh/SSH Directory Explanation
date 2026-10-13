@@ -1,0 +1,35 @@
+# OpenSSH Directory Structure and File Explanations (/etc/ssh)
+
+This directory contains the core configuration files, modular drop-in folders,
+and cryptographic host keys for OpenSSH, typically found on Linux distributions 
+like Red Hat Enterprise Linux (RHEL), Fedora, or CentOS.
+
+## Main Configuration Files
+
+- sshd_config: The main configuration file for the SSH server daemon (sshd). 
+               It controls how incoming connections are handled, authentication methods,
+               port configurations, and security policies.
+- ssh_config: The global configuration file for the SSH client. 
+              It defines default settings for outgoing connections made from this machine to remote servers.
+- moduli: Contains cryptographic prime numbers and generators used for Diffie-Hellman (DH) Group key exchange 
+          during SSH sessions to ensure secure, forward-secret encryption.
+
+## Modular Configuration Directories (.d)
+
+Modern OpenSSH versions support drop-in configuration directories, allowing packages or administrators
+to add settings cleanly without editing the main configuration files.
+
+- sshd_config.d/: Contains server-side snippet files loaded by the SSH daemon.
+  - 01-permitrootlogin.conf: Explicitly sets whether the root user can log in via SSH.
+  - 50-redhat.conf: Distribution-default overrides and settings supplied by Red Hat.
+- ssh_config.d/: Contains client-side snippet files for outgoing connections.
+  - 50-redhat.conf: Default client-side configurations specific to Red Hat.
+
+## Host Cryptographic Keys
+
+When an SSH server starts up, it uses these private and public key pairs to prove its identity to connecting
+clients and prevent Man-in-the-Middle (MitM) attacks.
+
+- ssh_host_ed25519_key & .pub: Private and public keys using the modern, high-security Ed25519 elliptic curve algorithm.
+- ssh_host_ecdsa_key & .pub: Private and public keys using the ECDSA standard.
+- ssh_host_rsa_key & .pub: Legacy RSA private and public keys maintained for backwards compatibility with older clients.
