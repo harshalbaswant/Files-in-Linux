@@ -1,0 +1,77 @@
+/etc/
+├── alternatives/        # Manages symbolic links for default commands (e.g., java, editor)
+├── audit/               # Audit subsystem configuration files (auditd)
+├── authselect/          # Manages system authentication and identity configuration
+├── bash_completion.d/   # Custom command-line auto-completion scripts for Bash
+├── binfmt.d/            # Configures executable binary formats for foreign architectures
+├── cifs-utils/          # Utilities and configs for Common Internet File System mounts
+├── cron.d/              # Crontab files for specialized system tasks
+├── cron.daily/          # Scripts executed automatically every day
+├── cron.hourly/         # Scripts executed automatically every hour
+├── cron.monthly/        # Scripts executed automatically every month
+├── cron.weekly/         # Scripts executed automatically every week
+├── crypto-policies/     # System-wide cryptographic policies configuration
+├── dbus-1/              # D-Bus message bus system and session configuration
+├── default/             # Default startup parameters for various daemons
+├── depmod.d/            # Configuration files for kernel module dependency generation
+├── dnf/                 # Configuration settings for the DNF package manager
+├── dracut.conf.d/       # Custom configuration snippets for initramfs generation
+├── firewalld/           # XML-based configuration files for the firewalld service
+├── fonts/               # System-wide font configurations and aliases
+├── gcrypt/              # Libgcrypt library configuration
+├── gnupg/               # GnuPG (GNU Privacy Guard) default options and keys
+├── groff/               # Groff text formatting configuration
+├── grub.d/              # Bootloader configuration scripts for GRUB2
+├── gss/                 # Generic Security Services configuration files
+├── iproute2/            # Network routing and traffic control configuration
+├── issue.d/             # Dynamic pre-login banner generation snippets
+├── kdump/               # Kernel crash dump utility configuration
+├── kernel/              # Kernel-related configuration files
+├── keyutils/            # Key management utilities configuration
+├── keys/                # Trusted system keys and keyrings
+├── krb5.conf.d/         # Kerberos 5 protocol configuration fragments
+├── ld.so.conf.d/        # Paths to directories containing shared dynamic libraries
+├── libnl/               # Netlink protocol library configuration
+├── libreport/           # Error reporting and analysis tool configuration
+├── libssh/              # SSH client/server library configuration
+├── logrotate.d/         # Log rotation rules to prevent disk space exhaustion
+├── lvm/                 # Logical Volume Manager configuration files
+├── microcode_ctl/       # CPU microcode update configuration
+├── modprobe.d/          # Kernel module loading options and blacklists
+├── modules-load.d/      # Extra kernel modules to load at boot time
+├── motd.d/              # Dynamic Message of the Day text snippets
+├── NetworkManager/      # Network connection profiles and daemon settings
+├── nftables/            # Modern packet filtering rules and tables
+├── nvme/                # NVMe storage device configuration
+├── openldap/            # LDAP client configuration (ldap.conf)
+├── opt/                 # Configuration files for optional software packages
+├── pam.d/               # Pluggable Authentication Modules configuration
+├── pkcs11/              # Cryptographic token management configuration
+├── pki/                 # Public Key Infrastructure certificates and keys
+├── pm/                  # Power management scripts and hooks
+├── popt.d/              # Command-line option parsing library configurations
+├── profile.d/           # System-wide environment variables and shell scripts
+├── qemu-ga/             # QEMU Guest Agent configuration
+├── rc.d/                # System initialization and runlevel scripts
+├── request-key.d/       # Kernel upcall management for key instantiation
+├── rpm/                 # RPM package manager configuration
+├── rsyslog.d/           # System logging daemon configuration rules
+├── rwtab.d/             # Read-write mount point definitions for diskless nodes
+├── sasl2/               # Simple Authentication and Security Layer configuration
+├── selinux/             # Security-Enhanced Linux policies and settings
+├── skel/                # Skeleton directory template files for new user creation
+├── ssh/                 # OpenSSH server and client configuration files
+├── ssl/                 # OpenSSL certificate authority and configuration files
+├── sssd/                # System Security Services Daemon configuration
+├── statetab.d/          # Persistent state file mappings
+├── sudoers.d/           # Granular administrative privilege (sudo) overrides
+├── sysconfig/           # Traditional Red Hat system service configuration variables
+├── sysctl.d/            # Runtime kernel parameter configuration files
+├── systemd/             # System and service manager configuration
+├── terminfo/            # Terminal capability database
+├── tmpfiles.d/          # Configuration for creation and cleaning of volatile files
+├── udev/                # Device node management and hotplug rules
+├── xdg/                 # Desktop-agnostic configuration standards (XDG)
+├── X11/                 # X Window System configuration files
+├── yum/                 # Legacy YUM package manager settings
+└── yum.repos.d/         # Repository definitions for package updates
