@@ -1,0 +1,164 @@
+===============================================================================
+/etc/shells FILE & SHELL CATEGORIES
+===============================================================================
+
+-------------------------------------------------------------------------------
+PART 1: TECHNICAL DOCUMENTATION (/etc/shells)
+-------------------------------------------------------------------------------
+
+1. INTRODUCTION & OVERVIEW
+--------------------------
+The /etc/shells file is a plain-text configuration file found on Linux and 
+Unix-like operating systems. It contains a list of full paths to valid, allowed 
+login shells available on the system.
+
+System services, administrative commands, and third-party applications consult 
+this file to determine whether a given program or shell is permitted to act as 
+an interactive user shell.
+
+
+2. FILE LOCATION AND DEFAULT CONTENTS
+-------------------------------------
+* Location: /etc/shells
+* Permissions: Usually owned by root, readable by all users (-rw-r--r-- or 644)
+
+Typical Structure:
+Each line in /etc/shells contains an absolute path to an executable shell. 
+Lines starting with '#' are treated as comments.
+
+# /etc/shells: valid login shells
+/bin/sh
+/bin/bash
+/usr/bin/bash
+/bin/rbash
+/usr/bin/rbash
+/usr/bin/sh
+/bin/dash
+/usr/bin/dash
+/bin/zsh
+/usr/bin/zsh
+
+
+3. KEY FUNCTIONS & DEPENDENCIES
+-------------------------------
+/etc/shells plays a crucial role across several system utilities:
+
+A. The chsh (Change Shell) Command
+   When a user attempts to change their default login shell using the `chsh` 
+   command, `chsh` checks the target shell against /etc/shells. If the requested 
+   shell path is not listed in /etc/shells, non-root users will be denied 
+   the change.
+
+B. Security & System Daemons (FTP, SSH, PAM)
+   - FTP Servers (e.g., vsftpd, proftpd): Many FTP daemons disallow logins for 
+     users whose default shell (defined in /etc/passwd) is not listed in 
+     /etc/shells.
+   - PAM (Pluggable Authentication Modules): The pam_shells.so module restricts 
+     access to services if the user's shell isn't registered in /etc/shells.
+
+C. Restricted Logins (/sbin/nologin)
+   To block interactive logins for system accounts (e.g., nobody, www-data, 
+   ftp), administrators set their shell to /sbin/nologin or /bin/false.
+   /sbin/nologin is often added to /etc/shells if services require a valid 
+   shell entry to function, even for non-interactive users.
+
+
+4. USEFUL COMMANDS FOR WORKING WITH /etc/shells
+-----------------------------------------------
+A. Display Installed Valid Shells:
+   cat /etc/shells
+   grep '^[^#]' /etc/shells
+
+B. Add a New Shell to /etc/shells:
+   echo "/usr/local/bin/fish" | sudo tee -a /etc/shells
+
+C. Check Your Current Default Shell:
+   echo $SHELL
+
+D. Change Default Shell (chsh):
+   chsh -s /bin/zsh
+
+
+5. SECURITY & BEST PRACTICES
+----------------------------
+1. Always Use Absolute Paths: Ensure every entry in /etc/shells starts with 
+   a root directory `/` (e.g., /bin/zsh instead of zsh).
+2. Do Not Add Arbitrary Executables: Never add general binaries (like 
+   /usr/bin/python3 or custom scripts) unless explicitly intended to act 
+   as a restricted login shell wrapper.
+3. Handle Symlinks Carefully: Many modern Linux distributions use /usr/bin 
+   merge, where /bin/bash is a symlink to /usr/bin/bash. Keep both paths 
+   listed in /etc/shells to ensure compatibility across older tools and scripts.
+
+
+===============================================================================
+PART 2: TYPES OF SHELLS, CATEGORIES & EXAMPLES
+===============================================================================
+
+1. BOURNE SHELL FAMILY (POSIX-COMPLIANT)
+----------------------------------------
+* bash (Bourne Again SHell)
+  - Paths: /bin/bash, /usr/bin/bash
+  - Overview: Standard interactive and scripting shell across most Linux systems.
+  - Example Command: bash -c 'echo "Hello from Bash"'
+
+* sh (Bourne Shell / POSIX Shell)
+  - Paths: /bin/sh, /usr/bin/sh
+  - Overview: The baseline Unix shell. Usually symlinked to bash or dash.
+  - Example Command: sh -c 'echo "POSIX standard mode"'
+
+* dash (Debian Almquist Shell)
+  - Paths: /bin/dash, /usr/bin/dash
+  - Overview: Lightweight, fast shell used for system boot scripts in Debian/Ubuntu.
+  - Example Command: dash -c 'echo "Executing via Dash"'
+
+* rbash (Restricted Bash)
+  - Paths: /bin/rbash, /usr/bin/rbash
+  - Overview: Restricted version of Bash to restrict users from changing directories 
+    or modifying system variables.
+  - Example Command: rbash
+
+
+2. C SHELL FAMILY (C-STYLE SYNTAX)
+----------------------------------
+* csh (C Shell)
+  - Paths: /bin/csh, /usr/bin/csh
+  - Overview: Shell designed with syntax similar to the C programming language.
+
+* tcsh (TENEX C Shell)
+  - Paths: /bin/tcsh, /usr/bin/tcsh
+  - Overview: Enhanced version of csh with command-line completion and line editing.
+  - Example Command: tcsh -c 'echo "Hello from TCSH"'
+
+
+3. KORN SHELL FAMILY
+--------------------
+* ksh (KornShell)
+  - Paths: /bin/ksh, /usr/bin/ksh
+  - Overview: Combines Bourne shell syntax with C shell features, offering 
+    advanced math and associative arrays.
+  - Example Command: ksh -c 'print "Hello from Ksh"'
+
+
+4. ADVANCED INTERACTIVE SHELLS
+------------------------------
+* zsh (Z Shell)
+  - Paths: /bin/zsh, /usr/bin/zsh
+  - Overview: Advanced shell with powerful tab-completion, themes, and plugins.
+    Default shell on modern macOS.
+  - Example Command: zsh -c 'echo "Running in Zsh"'
+
+* fish (Friendly Interactive Shell)
+  - Paths: /usr/bin/fish, /usr/local/bin/fish
+  - Overview: Modern shell focused on out-of-the-box auto-suggestions and syntax 
+    highlighting.
+  - Example Command: fish -c 'echo "Hello from Fish"'
+
+
+5. NON-INTERACTIVE & SECURITY SHELLS
+------------------------------------
+* nologin / false
+  - Paths: /sbin/nologin, /bin/false
+  - Overview: Used to prevent service accounts (e.g., www-data, ftp) from 
+    logging in interactively.
+===============================================================================
