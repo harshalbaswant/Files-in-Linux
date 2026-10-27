@@ -1,0 +1,99 @@
+===============================================================================
+		 /etc/protocols FILE
+===============================================================================
+
+1. INTRODUCTION
+-------------------------------------------------------------------------------
+The `/etc/protocols` file is a standard plain-text database found on Unix-like 
+operating systems (Linux, macOS, BSD). It provides a mapping between human-
+readable network protocol names and their official Internet Protocol (IP) 
+protocol numbers as assigned by IANA (Internet Assigned Numbers Authority).
+
+When data travels across an IP network, the IPv4 header (in the "Protocol" 
+field) or IPv6 header (in the "Next Header" field) contains an integer value. 
+The `/etc/protocols` file allows operating system routines, monitoring tools, 
+and utilities to translate that integer value into a human-readable string.
+
+
+2. FILE STRUCTURE AND FORMAT
+-------------------------------------------------------------------------------
+Each non-comment line in `/etc/protocols` consists of three main fields:
+
+   <Protocol Name>    <Protocol Number>    <Aliases>    [# Comment]
+
+Fields are defined as follows:
+  * Protocol Name   : Primary, lowercase canonical name (e.g., tcp, udp, icmp).
+  * Protocol Number : Official IANA decimal identifier (0 to 255).
+  * Aliases         : Optional secondary names or uppercase abbreviations.
+  * Comment         : Text preceded by '#' explaining the protocol.
+
+Example Snippet:
+-------------------------------------------------------------------------------
+# Protocol Name   Number   Aliases          Comments
+ip                0        IP               # Internet Protocol
+icmp              1        ICMP             # Internet Control Message Protocol
+igmp              2        IGMP             # Internet Group Management Protocol
+tcp               6        TCP              # Transmission Control Protocol
+udp               17       UDP              # User Datagram Protocol
+ipv6              41       IPv6             # IPv6 encapsulation
+ospf              89       OSPFIGP          # Open Shortest Path First
+sctp              132      SCTP             # Stream Control Transmission Protocol
+-------------------------------------------------------------------------------
+
+
+3. DIFFERENCE BETWEEN /etc/protocols AND /etc/services
+-------------------------------------------------------------------------------
+A common point of confusion is the distinction between `/etc/protocols` and 
+`/etc/services`:
+
+  * /etc/protocols:
+    - Maps IP Layer 3 / Layer 4 protocol numbers (0–255).
+    - Identifies HOW packets are structured at the network layer.
+    - Examples: ICMP (1), TCP (6), UDP (17), GRE (47), OSPF (89).
+
+  * /etc/services:
+    - Maps transport layer port numbers (0–65535) to application services.
+    - Identifies WHICH application receives the data payload.
+    - Examples: SSH (22/tcp), HTTP (80/tcp), DNS (53/udp).
+
+
+4. PROGRAMMATIC USAGE (C / C++ / PYTHON)
+-------------------------------------------------------------------------------
+Applications utilize standard POSIX network library functions to read this file:
+
+  * `getprotobyname("tcp")`   -> Retrieves entry for protocol name 'tcp'.
+  * `getprotobynumber(6)`    -> Retrieves entry for protocol number 6.
+  * `setprotoent()` / `getprotoent()` / `endprotoent()` -> Iterate through file.
+
+In Python, the `socket` module uses this underlying OS layer:
+  >>> import socket
+  >>> socket.getservbyname('http') # Services lookup
+  80
+  >>> socket.getprotobyname('tcp') # Protocols lookup (/etc/protocols)
+  6
+
+
+5. SYSTEM TOOLS THAT UTILIZE /etc/protocols
+-------------------------------------------------------------------------------
+Many networking tools rely on `/etc/protocols` to render human-readable output:
+
+  1. Packet Capture & Analysis:
+     - `tcpdump` and `wireshark` use it to label non-TCP/UDP IP protocols.
+  2. Firewalls & Packet Filters:
+     - `iptables`, `nftables`, and `ufw` allow specifying protocol names 
+       (e.g., `iptables -A INPUT -p icmp -j ACCEPT`) by resolving them here.
+  3. Network Diagnostics:
+     - `netstat`, `ss`, and `nmap` query this file to identify raw sockets.
+
+
+6. COMMAND-LINE TRICKS & EXAMPLES
+-------------------------------------------------------------------------------
+* View the whole file (excluding comments and blank lines):
+  $ grep -v '^#' /etc/protocols | grep -v '^$'
+
+* Find the protocol number for ICMP:
+  $ awk '$1 == "icmp" {print $2}' /etc/protocols
+
+* Look up what protocol #89 stands for:
+  $ awk '$2 == "89" {print $1}' /etc/protocols
+===============================================================================
