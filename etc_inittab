@@ -1,0 +1,109 @@
+===============================================================================
+                       /etc/inittab FILE
+===============================================================================
+
+1. INTRODUCTION
+-------------------------------------------------------------------------------
+The `/etc/inittab` file is the primary configuration file for SysVinit (System V 
+Initialization), the traditional init daemon used on Unix and older Linux 
+distributions to control system startup, runlevels, and process management.
+
+In SysVinit systems, `init` is the first process started by the Linux kernel 
+(PID 1). Upon launching, `init` reads `/etc/inittab` to determine:
+  * The default runlevel of the system.
+  * Which initialization scripts to execute.
+  * Which virtual consoles (tty) or graphical login managers to start.
+  * How to handle power failure signals or pressing Ctrl+Alt+Del.
+
+Note: Modern Linux distributions (such as Ubuntu, Debian, CentOS, RHEL, Fedora) 
+have replaced SysVinit with modern init systems like `systemd` or `Upstart`. 
+However, `/etc/inittab` remains a fundamental concept in Unix administration.
+
+
+2. FILE FORMAT AND SYNTAX
+-------------------------------------------------------------------------------
+Every non-comment line in `/etc/inittab` follows a specific four-field syntax:
+
+   id:runlevels:action:process
+
+Field Definitions:
+------------------
+1. id        : A unique identifier (1 to 4 characters, e.g., `id`, `si`, `c1`).
+2. runlevels : A list of runlevels (0-6) where this entry applies. 
+              If empty, it applies to all runlevels.
+3. action    : Defines HOW `init` executes the specified process.
+4. process   : The shell command or script to execute.
+
+
+3. COMMON ACTION KEYWORDS
+-------------------------------------------------------------------------------
+The `action` field supports several keywords that dictate process behavior:
+
+  * initdefault : Sets the default system runlevel after booting. 
+                  (The `process` field is ignored here).
+  * sysinit     : Executed during system initialization, regardless of runlevel. 
+                  Runs before any standard service initialization.
+  * wait        : Process is started once when entering specified runlevel, 
+                  and `init` waits for it to terminate before proceeding.
+  * once        : Process is started once when entering specified runlevel, 
+                  but `init` does NOT wait for it to finish.
+  * respawn     : Process is restarted automatically whenever it terminates 
+                  (commonly used for terminal logins / getty).
+  * ctrlaltdel  : Executed when `init` receives a SIGINT signal (e.g., when 
+                  a user presses Ctrl+Alt+Del).
+  * powerwait   : Executed when power fails (triggered by UPS utilities like apcupsd).
+
+
+4. UNDERSTANDING SYSVINIT RUNLEVELS
+-------------------------------------------------------------------------------
+SysVinit defines 7 standard operating states called runlevels:
+
+  Runlevel 0 : Halt (Shuts down the system)
+  Runlevel 1 : Single-User Mode (Maintenance / Root shell, no network)
+  Runlevel 2 : Multi-User Mode without Networking (rarely used)
+  Runlevel 3 : Full Multi-User Mode with Networking (standard command-line/server)
+  Runlevel 4 : Undefined / User-customizable
+  Runlevel 5 : Graphical Multi-User Mode (GUI login manager like GDM/SDDM)
+  Runlevel 6 : Reboot (Restarts the system)
+
+
+5. TYPICAL EXAMPLE OF AN /etc/inittab FILE
+-------------------------------------------------------------------------------
+```text
+# Set default runlevel to 3 (Multi-User with Networking)
+id:3:initdefault:
+
+# System initialization script (mounts filesystems, sets hostname)
+si::sysinit:/etc/rc.d/rc.sysinit
+
+# Runlevel script launcher
+l0:0:wait:/etc/rc.d/rc 0
+l1:1:wait:/etc/rc.d/rc 1
+l2:2:wait:/etc/rc.d/rc 2
+l3:3:wait:/etc/rc.d/rc 3
+l4:4:wait:/etc/rc.d/rc 4
+l5:5:wait:/etc/rc.d/rc 5
+l6:6:wait:/etc/rc.d/rc 6
+
+# What to do on Ctrl-Alt-Del
+ca:12345:ctrlaltdel:/sbin/shutdown -t1 -a -r now
+
+# Spawn virtual consoles (getty processes) for user logins
+1:2345:respawn:/sbin/getty 38400 tty1
+2:2345:respawn:/sbin/getty 38400 tty2
+3:2345:respawn:/sbin/getty 38400 tty3
+4:2345:respawn:/sbin/getty 38400 tty4
+```
+
+
+6. MODERN EQUIVALENT: SYSTEMD
+-------------------------------------------------------------------------------
+On modern `systemd`-based Linux systems, `/etc/inittab` is no longer used or 
+exists only as a stub file with informative comments.
+
+Equivalent `systemd` concepts include:
+  * Default Runlevel 3  -->  `systemctl set-default multi-user.target`
+  * Default Runlevel 5  -->  `systemctl set-default graphical.target`
+  * Service Management  -->  Unit files located in `/etc/systemd/system/` 
+                             or `/lib/systemd/system/`
+===============================================================================
