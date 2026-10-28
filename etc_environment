@@ -1,0 +1,90 @@
+================================================================================
+    /etc/environment CONFIGURATION FILE 
+================================================================================
+
+1. WHAT IS /etc/environment?
+--------------------------------------------------------------------------------
+The `/etc/environment` file is a system-wide configuration file used in 
+Linux operating systems to define global environment variables. 
+
+Key Characteristics:
+  - Global Scope : Variables apply to ALL users and background services.
+  - PAM-Driven   : Read directly by Pluggable Authentication Modules (PAM) 
+                   via `pam_env.so` during session initialization.
+  - Non-Shell    : It is NOT a shell script; it is parsed as a simple configuration 
+                   file before any user shell (Bash, Zsh, Fish) is loaded.
+
+2. SYNTAX & FORMAT RULES
+--------------------------------------------------------------------------------
+Because `/etc/environment` is parsed by PAM and not executed by a shell interpreter, 
+it follows strict formatting rules:
+
+  Rule 1: KEY=VALUE Format Only
+          Syntax : VARIABLE_NAME="value"
+          Example: JAVA_HOME="/usr/lib/jvm/java-11-openjdk"
+
+  Rule 2: NO 'export' Keyword
+          INCORRECT: export PATH="/usr/bin"
+          CORRECT  : PATH="/usr/bin"
+
+  Rule 3: NO Shell Expressions or Logic
+          You CANNOT use conditional statements (if/then), functions, loops, or 
+          command substitutions (like `$(date)` or `uname -r`).
+
+  Rule 4: NO Variable Expansion/Referencing
+          You CANNOT reference other variables inside this file.
+          INCORRECT: PATH="$PATH:/opt/bin"
+          CORRECT  : PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/opt/bin"
+
+
+3. COMMON USE CASES
+--------------------------------------------------------------------------------
+A. Setting System-Wide Search Path (PATH):
+   PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/opt/bin"
+
+B. Defining Default Software SDK/Runtime Locations:
+   JAVA_HOME="/usr/lib/jvm/java-17-openjdk"
+   GOROOT="/usr/local/go"
+
+C. Configuring Global HTTP Proxy Settings:
+   http_proxy="http://proxy.example.com:8080"
+   https_proxy="http://proxy.example.com:8080"
+   no_proxy="localhost,127.0.0.1,.example.com"
+
+D. Defining Default System Locale & Language:
+   LANG="en_US.UTF-8"
+   LC_ALL="en_US.UTF-8"
+
+
+4. COMPARISON: /etc/environment vs OTHER ENV CONFIG FILES
+----------------------------------------------------------------------------------
++-------------------+----------------+----------------+--------------------------+
+| File              | Scope          | Parsed By      | Supports Shell Logic?    |
++-------------------+----------------+----------------+--------------------------+
+| /etc/environment  | System-wide    | PAM (pam_env)  | NO (Static KEY=VALUE)    |
+| /etc/profile      | System-wide    | Login Shells   | YES (Full Bash syntax)   |
+|/etc/profile.d/*.sh| System-wide    | Login Shells   | YES (Full Bash syntax)   |
+| ~/.bashrc         | Per-user       | Interactive Bash| YES (Full Bash syntax)  |
+| ~/.pam_environment| Per-user       | PAM (pam_env)  | NO (Deprecated in PAM)   |
++-------------------+----------------+----------------+--------------------------+
+
+
+5. HOW TO APPLY & TEST CHANGES
+--------------------------------------------------------------------------------
+Step 1: Edit the file (requires root privileges):
+  sudo nano /etc/environment
+
+Step 2: Save the file.
+
+Step 3: Apply the changes:
+  Because `/etc/environment` is read upon session creation, changes take effect 
+  when a user logs in again.
+  
+  - For active terminal sessions: Log out and log back in, or re-authenticate:
+      su - $USER
+  
+  - For system services: Restart the specific service (e.g., `sudo systemctl restart nginx`).
+
+Step 4: Verify the variable:
+  echo $JAVA_HOME
+================================================================================
