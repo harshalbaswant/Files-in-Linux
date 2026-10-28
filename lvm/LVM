@@ -1,0 +1,86 @@
+================================================================================
+LVM (LOGICAL VOLUME MANAGER) DIRECTORY STRUCTURE & CONFIGURATION
+================================================================================
+
+1. OVERVIEW OF /etc/lvm/
+--------------------------------------------------------------------------------
+The `/etc/lvm/` directory houses the global configurations, historical metadata 
+archives, runtime cache files, and performance profiles for the Linux Logical 
+Volume Manager (LVM). 
+
+LVM allows administrators to combine physical hard drives into volume groups 
+(VG) and dynamically allocate space to logical volumes (LV). The files in this 
+directory ensure that volume group structures are maintained, cached, backed up, 
+and optimized.
+
+
+2. DIRECTORY BREAKDOWN & FILE EXPLANATIONS
+--------------------------------------------------------------------------------
+
+A. archive/
+   - Description: Stores historical snapshots of volume group metadata.
+   - Purpose    : Every time an LVM modification occurs (e.g., resizing an LV, 
+                  extending a VG, or adding a PV), LVM saves a timestamped 
+                  backup of the previous configuration here.
+   - Example    : `almalinux_00000-857093324.vg`
+   - Use Case   : Rollback and disaster recovery when an accidental configuration 
+                  change or corruption occurs.
+
+B. backup/
+   - Description: Stores the latest active structural metadata for each Volume Group.
+   - Purpose    : Contains plain-text blueprints of current Volume Group structures. 
+                  Unlike `archive/` (which keeps full history), `backup/` maintains 
+                  only the current state.
+   - Example    : `almalinux`
+   - Use Case   : Used by administrative tools like `vgcfgrestore` to restore 
+                  corrupted volume group headers directly onto physical disks.
+
+C. cache/
+   - Description: Holds persistent LVM runtime cache data.
+   - Purpose    : Speeds up system boot and LVM command execution by storing 
+                  scanning hints and known block device mappings, preventing LVM 
+                  from having to rescan all physical disks repeatedly.
+
+D. devices/
+   - Description: Contains hardware device tracking files.
+   - File       : `system.devices`
+   - Purpose    : Modern LVM uses device tracking files to explicitly bind LVM 
+                  Physical Volumes to unique device IDs rather than relying solely 
+                  on disk scanning heuristics.
+
+E. lvm.conf & lvmlocal.conf
+   - lvm.conf      : The primary global configuration file. Defines scanning filters, 
+                     logging levels, allocation policies, backup retention count, 
+                     and system-wide LVM daemons.
+   - lvmlocal.conf : Contains host-specific configuration overrides that apply ONLY 
+                     to the local machine. Used when settings should not be shared 
+                     across clustered environments or host migrations.
+
+F. profile/
+   - Description: Preset configuration templates for specialized volume behavior 
+                  and performance tuning.
+   - Key Profiles:
+     * cache-mq.profile / cache-smq.profile : Settings for fast SSD caching over 
+                                              slower HDDs using Multi-Queue algorithms.
+     * thin-generic.profile / thin-performance.profile : Allocation and discard 
+                                                          rules for thin pools.
+     * vdo-small.profile : Optimized parameters for Virtual Data Optimizer (VDO) 
+                           deduplication and compression.
+     * command_profile_template.profile / metadata_profile_template.profile : 
+       Templates for customizing command execution and metadata validation rules.
+
+
+3. KEY RECOVERY & MANAGEMENT COMMANDS
+--------------------------------------------------------------------------------
+- View Volume Group Backups:
+    cat /etc/lvm/backup/<volume_group_name>
+
+- Restore Metadata from Backup File:
+    vgcfgrestore -f /etc/lvm/backup/<volume_group_name> <volume_group_name>
+
+- Restore Metadata from Archive File:
+    vgcfgrestore -f /etc/lvm/archive/<archive_file_name>.vg <volume_group_name>
+
+- Check Active LVM Devices:
+    lvmdevices --list
+================================================================================
